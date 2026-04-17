@@ -1,0 +1,129 @@
+/*
+ * Kalman.c
+ *
+ *  Created on: Apr 15, 2026
+ *      Author: User
+ */
+
+#include "Kalman.h"
+
+void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt) {
+    // 1. Initialize structures to memory arrays
+    arm_mat_init_f32(&kf->x, KALMAN_STATE_DIM, 1, kf->x_data);
+    arm_mat_init_f32(&kf->P, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->P_data);
+    arm_mat_init_f32(&kf->F, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->F_data);
+    arm_mat_init_f32(&kf->G, KALMAN_STATE_DIM, KALMAN_CONTROL_DIM, kf->G_data);
+    arm_mat_init_f32(&kf->Q, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->Q_data);
+    arm_mat_init_f32(&kf->H, KALMAN_MEAS_DIM,  KALMAN_STATE_DIM, kf->H_data);
+    arm_mat_init_f32(&kf->R, KALMAN_MEAS_DIM,  KALMAN_MEAS_DIM,  kf->R_data);
+    arm_mat_init_f32(&kf->K, KALMAN_STATE_DIM, KALMAN_MEAS_DIM, kf->K_data);
+    arm_mat_init_f32(&kf->S, KALMAN_MEAS_DIM,  KALMAN_MEAS_DIM, kf->S_data);
+    arm_mat_init_f32(&kf->S_inv, KALMAN_MEAS_DIM, KALMAN_MEAS_DIM, kf->S_inv_data);
+    arm_mat_init_f32(&kf->I, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->I_data);
+
+    // 2. Set Constant Velocity (CV) Initial Values
+    kf->x_data[0] = initial_position; // Position
+    kf->x_data[1] = 0.0f;             // Velocity
+
+    kf->F_data[0] = 1.0f; kf->F_data[1] = dt;
+    kf->F_data[2] = 0.0f; kf->F_data[3] = 1.0f;
+
+    kf->H_data[0] = 1.0f; kf->H_data[1] = 0.0f; // Only measure position
+
+    kf->P_data[0] = 100.0f; kf->P_data[1] = 0.0f;
+    kf->P_data[2] = 0.0f;   kf->P_data[3] = 100.0f;
+
+    kf->Q_data[0] = 0.1f; kf->Q_data[1] = 0.0f;
+    kf->Q_data[2] = 0.0f; kf->Q_data[3] = 0.1f;
+
+    kf->G_data[0] = 0.0f; kf->G_data[1] = 0.0f;
+
+    kf->R_data[0] = 5.0f; // Sensor noise variance
+
+    kf->I_data[0] = 1.0f; kf->I_data[1] = 0.0f;
+    kf->I_data[2] = 0.0f; kf->I_data[3] = 1.0f;
+}
+
+float Kalman_Update(KalmanFilter_t *kf, float measurement, float control_input, float dt) {
+
+    // UPDATE PHYSICS MATRIX WITH EXACT TIME STEP
+    kf->F_data[1] = dt;
+
+    // --- TEMPORARY MATRICES ---
+    float t1_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+    float t2_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+    float t3_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+    float t4_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+    float ht_d[KALMAN_STATE_DIM * KALMAN_MEAS_DIM];
+
+    arm_matrix_instance_f32 Temp1, Temp2, Temp3, Temp4, H_trans;
+    arm_mat_init_f32(&Temp1, KALMAN_STATE_DIM, KALMAN_STATE_DIM, t1_d);
+    arm_mat_init_f32(&Temp2, KALMAN_STATE_DIM, KALMAN_STATE_DIM, t2_d);
+    arm_mat_init_f32(&Temp3, KALMAN_STATE_DIM, KALMAN_STATE_DIM, t3_d);
+    arm_mat_init_f32(&Temp4, KALMAN_STATE_DIM, KALMAN_STATE_DIM, t4_d);
+    arm_mat_init_f32(&H_trans, KALMAN_STATE_DIM, KALMAN_MEAS_DIM, ht_d);
+
+    arm_matrix_instance_f32 u, z;
+    float u_data[1] = {control_input};
+    float z_data[1] = {measurement};
+    arm_mat_init_f32(&u, KALMAN_CONTROL_DIM, 1, u_data);
+    arm_mat_init_f32(&z, KALMAN_MEAS_DIM, 1, z_data);
+
+    // ==========================================
+    // PREDICT STEP
+    // ==========================================
+    // x = F*x + G*u
+    arm_mat_mult_f32(&kf->F, &kf->x, &Temp1);
+    arm_mat_mult_f32(&kf->G, &u, &Temp2);
+    arm_mat_add_f32(&Temp1, &Temp2, &kf->x);
+
+    // P = F*P*F^T + Q
+    arm_matrix_instance_f32 F_trans;
+    float ft_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+    arm_mat_init_f32(&F_trans, KALMAN_STATE_DIM, KALMAN_STATE_DIM, ft_d);
+
+    arm_mat_trans_f32(&kf->F, &F_trans);
+    arm_mat_mult_f32(&kf->F, &kf->P, &Temp1);
+    arm_mat_mult_f32(&Temp1, &F_trans, &Temp2);
+    arm_mat_add_f32(&Temp2, &kf->Q, &kf->P);
+
+    // ==========================================
+    // CORRECT STEP (JOSEPH FORM)
+    // ==========================================
+    // K = P*H^T * (H*P*H^T + R)^-1
+    arm_mat_trans_f32(&kf->H, &H_trans);
+    arm_mat_mult_f32(&kf->H, &kf->P, &Temp1);
+    arm_mat_mult_f32(&Temp1, &H_trans, &Temp2);
+    arm_mat_add_f32(&Temp2, &kf->R, &kf->S);
+    arm_mat_inverse_f32(&kf->S, &kf->S_inv);
+    arm_mat_mult_f32(&kf->P, &H_trans, &Temp1);
+    arm_mat_mult_f32(&Temp1, &kf->S_inv, &kf->K);
+
+    // x = x + K*(z - H*x)
+    arm_mat_mult_f32(&kf->H, &kf->x, &Temp1);
+    arm_mat_sub_f32(&z, &Temp1, &Temp2);
+    arm_mat_mult_f32(&kf->K, &Temp2, &Temp1);
+    arm_mat_add_f32(&kf->x, &Temp1, &kf->x);
+
+    // P = (I - K*H)*P*(I - K*H)^T + K*R*K^T
+    arm_mat_mult_f32(&kf->K, &kf->H, &Temp1);
+    arm_mat_sub_f32(&kf->I, &Temp1, &Temp2);
+    arm_mat_mult_f32(&Temp2, &kf->P, &Temp1);
+    arm_matrix_instance_f32 I_KH_trans;
+    float ikht_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+    arm_mat_init_f32(&I_KH_trans, KALMAN_STATE_DIM, KALMAN_STATE_DIM, ikht_d);
+    arm_mat_trans_f32(&Temp2, &I_KH_trans);
+    arm_mat_mult_f32(&Temp1, &I_KH_trans, &Temp3);
+
+    arm_matrix_instance_f32 K_trans;
+    float kt_d[KALMAN_MEAS_DIM * KALMAN_STATE_DIM];
+    arm_mat_init_f32(&K_trans, KALMAN_MEAS_DIM, KALMAN_STATE_DIM, kt_d);
+    arm_mat_trans_f32(&kf->K, &K_trans);
+    arm_mat_mult_f32(&kf->K, &kf->R, &Temp1);
+    arm_mat_mult_f32(&Temp1, &K_trans, &Temp4);
+
+    arm_mat_add_f32(&Temp3, &Temp4, &kf->P);
+
+    // Return the cleaned position (index 0)
+    return kf->x_data[0];
+}

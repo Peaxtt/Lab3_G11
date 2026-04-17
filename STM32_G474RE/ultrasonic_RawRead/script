@@ -1,0 +1,11 @@
+config load "C:\Users\User\STM32CubeIDE\workspace_1.19.0\ultrasonic_RawRead\ultrasonic_RawRead.ioc"
+project toolchain STM32CubeIDE
+
+SetStructure Advanced
+
+project setCustomFWPath "C:\Users\User\STM32Cube\Repository\STM32Cube_FW_G4_V1.6.0"
+
+config save C:\Users\User\STM32CubeIDE\workspace_1.19.0\ultrasonic_RawRead\ultrasonic_RawRead.ioc
+
+
+exit wait

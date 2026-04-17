@@ -1,0 +1,60 @@
+/*
+ * ultrasonic.c
+ *
+ *  Created on: Apr 15, 2026
+ *      Author: User
+ */
+
+
+// ultrasonic.c
+
+// 1. ALWAYS include your own header file first!
+// This connects the "kitchen" to the "menu" and brings in the HAL hardware handles.
+#include "ultrasonic.h"
+
+// 2. Define any variables that belong to this library
+uint32_t sensor_timestamp = 0;
+float ConvertedValue_cm=0;
+
+// 3. Write the actual function logic
+
+float ultrasonicRawRead(void)
+{
+    // Trigger the sensor
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 15);
+
+    // Read the echo time
+    uint16_t UltrasonicTime = __HAL_TIM_GET_COMPARE(&htim1, TIM_CHANNEL_2);
+
+    // Calculate and return the distance
+    ConvertedValue_cm=(UltrasonicTime / 58.0f);
+    return ConvertedValue_cm;
+}
+
+void TransmitDistancePacket(float distance)
+{
+    // Define the union to safely slice the float
+    typedef union {
+        float value;
+        uint8_t bytes[4];
+    } FloatUnion;
+
+    FloatUnion dataToSend;
+    dataToSend.value = distance;
+
+    // Create the 8-byte buffer
+    uint8_t packet[8];
+
+    // Assemble the packet with Headers and Terminators
+    packet[0] = 0x7E;
+    packet[1] = 0x7E;
+    packet[2] = dataToSend.bytes[0];
+    packet[3] = dataToSend.bytes[1];
+    packet[4] = dataToSend.bytes[2];
+    packet[5] = dataToSend.bytes[3];
+    packet[6] = 0x03;
+    packet[7] = 0x03;
+
+    // Transmit via LPUART1
+    HAL_UART_Transmit(&hlpuart1, packet, 8, 10);
+}
