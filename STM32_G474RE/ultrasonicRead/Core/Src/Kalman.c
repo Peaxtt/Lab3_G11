@@ -25,7 +25,7 @@ void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float pro
     kf->x_data[0] = initial_position; // Position
     kf->x_data[1] = 0.0f;             // Velocity
 
-    kf->F_data[0] = 1.0f; kf->F_data[1] = dt;
+    kf->F_data[0] = 1.0f; kf->F_data[1] =0.0f;
     kf->F_data[2] = 0.0f; kf->F_data[3] = 1.0f;
 
     kf->H_data[0] = 1.0f; kf->H_data[1] = 0.0f; // Only measure position

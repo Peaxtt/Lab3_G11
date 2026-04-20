@@ -486,92 +486,91 @@ void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float pro
  8000622:	f04f 0200 	mov.w	r2, #0
  8000626:	65da      	str	r2, [r3, #92]	@ 0x5c
 
-    kf->F_data[0] = 1.0f; kf->F_data[1] = dt;
+    kf->F_data[0] = 1.0f; kf->F_data[1] =0.0f;
  8000628:	68fb      	ldr	r3, [r7, #12]
  800062a:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
  800062e:	671a      	str	r2, [r3, #112]	@ 0x70
  8000630:	68fb      	ldr	r3, [r7, #12]
- 8000632:	687a      	ldr	r2, [r7, #4]
- 8000634:	675a      	str	r2, [r3, #116]	@ 0x74
+ 8000632:	f04f 0200 	mov.w	r2, #0
+ 8000636:	675a      	str	r2, [r3, #116]	@ 0x74
     kf->F_data[2] = 0.0f; kf->F_data[3] = 1.0f;
- 8000636:	68fb      	ldr	r3, [r7, #12]
- 8000638:	f04f 0200 	mov.w	r2, #0
- 800063c:	679a      	str	r2, [r3, #120]	@ 0x78
- 800063e:	68fb      	ldr	r3, [r7, #12]
- 8000640:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
- 8000644:	67da      	str	r2, [r3, #124]	@ 0x7c
+ 8000638:	68fb      	ldr	r3, [r7, #12]
+ 800063a:	f04f 0200 	mov.w	r2, #0
+ 800063e:	679a      	str	r2, [r3, #120]	@ 0x78
+ 8000640:	68fb      	ldr	r3, [r7, #12]
+ 8000642:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
+ 8000646:	67da      	str	r2, [r3, #124]	@ 0x7c
 
     kf->H_data[0] = 1.0f; kf->H_data[1] = 0.0f; // Only measure position
- 8000646:	68fb      	ldr	r3, [r7, #12]
- 8000648:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
- 800064c:	f8c3 2098 	str.w	r2, [r3, #152]	@ 0x98
- 8000650:	68fb      	ldr	r3, [r7, #12]
- 8000652:	f04f 0200 	mov.w	r2, #0
- 8000656:	f8c3 209c 	str.w	r2, [r3, #156]	@ 0x9c
+ 8000648:	68fb      	ldr	r3, [r7, #12]
+ 800064a:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
+ 800064e:	f8c3 2098 	str.w	r2, [r3, #152]	@ 0x98
+ 8000652:	68fb      	ldr	r3, [r7, #12]
+ 8000654:	f04f 0200 	mov.w	r2, #0
+ 8000658:	f8c3 209c 	str.w	r2, [r3, #156]	@ 0x9c
 
     kf->P_data[0] = 100.0f; kf->P_data[1] = 0.0f;
- 800065a:	68fb      	ldr	r3, [r7, #12]
- 800065c:	4a23      	ldr	r2, [pc, #140]	@ (80006ec <Kalman_Init+0x1a8>)
- 800065e:	661a      	str	r2, [r3, #96]	@ 0x60
- 8000660:	68fb      	ldr	r3, [r7, #12]
- 8000662:	f04f 0200 	mov.w	r2, #0
- 8000666:	665a      	str	r2, [r3, #100]	@ 0x64
+ 800065c:	68fb      	ldr	r3, [r7, #12]
+ 800065e:	4a23      	ldr	r2, [pc, #140]	@ (80006ec <Kalman_Init+0x1a8>)
+ 8000660:	661a      	str	r2, [r3, #96]	@ 0x60
+ 8000662:	68fb      	ldr	r3, [r7, #12]
+ 8000664:	f04f 0200 	mov.w	r2, #0
+ 8000668:	665a      	str	r2, [r3, #100]	@ 0x64
     kf->P_data[2] = 0.0f;   kf->P_data[3] = 0.0f;
- 8000668:	68fb      	ldr	r3, [r7, #12]
- 800066a:	f04f 0200 	mov.w	r2, #0
- 800066e:	669a      	str	r2, [r3, #104]	@ 0x68
- 8000670:	68fb      	ldr	r3, [r7, #12]
- 8000672:	f04f 0200 	mov.w	r2, #0
- 8000676:	66da      	str	r2, [r3, #108]	@ 0x6c
+ 800066a:	68fb      	ldr	r3, [r7, #12]
+ 800066c:	f04f 0200 	mov.w	r2, #0
+ 8000670:	669a      	str	r2, [r3, #104]	@ 0x68
+ 8000672:	68fb      	ldr	r3, [r7, #12]
+ 8000674:	f04f 0200 	mov.w	r2, #0
+ 8000678:	66da      	str	r2, [r3, #108]	@ 0x6c
 
     kf->Q_data[0] = processNoise; kf->Q_data[1] = 0.0f;
- 8000678:	68fb      	ldr	r3, [r7, #12]
- 800067a:	683a      	ldr	r2, [r7, #0]
- 800067c:	f8c3 2088 	str.w	r2, [r3, #136]	@ 0x88
- 8000680:	68fb      	ldr	r3, [r7, #12]
- 8000682:	f04f 0200 	mov.w	r2, #0
- 8000686:	f8c3 208c 	str.w	r2, [r3, #140]	@ 0x8c
+ 800067a:	68fb      	ldr	r3, [r7, #12]
+ 800067c:	683a      	ldr	r2, [r7, #0]
+ 800067e:	f8c3 2088 	str.w	r2, [r3, #136]	@ 0x88
+ 8000682:	68fb      	ldr	r3, [r7, #12]
+ 8000684:	f04f 0200 	mov.w	r2, #0
+ 8000688:	f8c3 208c 	str.w	r2, [r3, #140]	@ 0x8c
     kf->Q_data[2] = 0.0f; kf->Q_data[3] = 0.0f;
- 800068a:	68fb      	ldr	r3, [r7, #12]
- 800068c:	f04f 0200 	mov.w	r2, #0
- 8000690:	f8c3 2090 	str.w	r2, [r3, #144]	@ 0x90
- 8000694:	68fb      	ldr	r3, [r7, #12]
- 8000696:	f04f 0200 	mov.w	r2, #0
- 800069a:	f8c3 2094 	str.w	r2, [r3, #148]	@ 0x94
+ 800068c:	68fb      	ldr	r3, [r7, #12]
+ 800068e:	f04f 0200 	mov.w	r2, #0
+ 8000692:	f8c3 2090 	str.w	r2, [r3, #144]	@ 0x90
+ 8000696:	68fb      	ldr	r3, [r7, #12]
+ 8000698:	f04f 0200 	mov.w	r2, #0
+ 800069c:	f8c3 2094 	str.w	r2, [r3, #148]	@ 0x94
 
     kf->G_data[0] = 0.0f; kf->G_data[1] = 0.0f;
- 800069e:	68fb      	ldr	r3, [r7, #12]
- 80006a0:	f04f 0200 	mov.w	r2, #0
- 80006a4:	f8c3 2080 	str.w	r2, [r3, #128]	@ 0x80
- 80006a8:	68fb      	ldr	r3, [r7, #12]
- 80006aa:	f04f 0200 	mov.w	r2, #0
- 80006ae:	f8c3 2084 	str.w	r2, [r3, #132]	@ 0x84
+ 80006a0:	68fb      	ldr	r3, [r7, #12]
+ 80006a2:	f04f 0200 	mov.w	r2, #0
+ 80006a6:	f8c3 2080 	str.w	r2, [r3, #128]	@ 0x80
+ 80006aa:	68fb      	ldr	r3, [r7, #12]
+ 80006ac:	f04f 0200 	mov.w	r2, #0
+ 80006b0:	f8c3 2084 	str.w	r2, [r3, #132]	@ 0x84
 
     kf->R_data[0] = 0.00292f; // Sensor noise variance
- 80006b2:	68fb      	ldr	r3, [r7, #12]
- 80006b4:	4a0e      	ldr	r2, [pc, #56]	@ (80006f0 <Kalman_Init+0x1ac>)
- 80006b6:	f8c3 20a0 	str.w	r2, [r3, #160]	@ 0xa0
+ 80006b4:	68fb      	ldr	r3, [r7, #12]
+ 80006b6:	4a0e      	ldr	r2, [pc, #56]	@ (80006f0 <Kalman_Init+0x1ac>)
+ 80006b8:	f8c3 20a0 	str.w	r2, [r3, #160]	@ 0xa0
 
     kf->I_data[0] = 1.0f; kf->I_data[1] = 0.0f;
- 80006ba:	68fb      	ldr	r3, [r7, #12]
- 80006bc:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
- 80006c0:	f8c3 20b4 	str.w	r2, [r3, #180]	@ 0xb4
- 80006c4:	68fb      	ldr	r3, [r7, #12]
- 80006c6:	f04f 0200 	mov.w	r2, #0
- 80006ca:	f8c3 20b8 	str.w	r2, [r3, #184]	@ 0xb8
+ 80006bc:	68fb      	ldr	r3, [r7, #12]
+ 80006be:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
+ 80006c2:	f8c3 20b4 	str.w	r2, [r3, #180]	@ 0xb4
+ 80006c6:	68fb      	ldr	r3, [r7, #12]
+ 80006c8:	f04f 0200 	mov.w	r2, #0
+ 80006cc:	f8c3 20b8 	str.w	r2, [r3, #184]	@ 0xb8
     kf->I_data[2] = 0.0f; kf->I_data[3] = 1.0f;
- 80006ce:	68fb      	ldr	r3, [r7, #12]
- 80006d0:	f04f 0200 	mov.w	r2, #0
- 80006d4:	f8c3 20bc 	str.w	r2, [r3, #188]	@ 0xbc
- 80006d8:	68fb      	ldr	r3, [r7, #12]
- 80006da:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
- 80006de:	f8c3 20c0 	str.w	r2, [r3, #192]	@ 0xc0
+ 80006d0:	68fb      	ldr	r3, [r7, #12]
+ 80006d2:	f04f 0200 	mov.w	r2, #0
+ 80006d6:	f8c3 20bc 	str.w	r2, [r3, #188]	@ 0xbc
+ 80006da:	68fb      	ldr	r3, [r7, #12]
+ 80006dc:	f04f 527e 	mov.w	r2, #1065353216	@ 0x3f800000
+ 80006e0:	f8c3 20c0 	str.w	r2, [r3, #192]	@ 0xc0
 }
- 80006e2:	bf00      	nop
- 80006e4:	3710      	adds	r7, #16
- 80006e6:	46bd      	mov	sp, r7
- 80006e8:	bd80      	pop	{r7, pc}
- 80006ea:	bf00      	nop
+ 80006e4:	bf00      	nop
+ 80006e6:	3710      	adds	r7, #16
+ 80006e8:	46bd      	mov	sp, r7
+ 80006ea:	bd80      	pop	{r7, pc}
  80006ec:	42c80000 	.word	0x42c80000
  80006f0:	3b3f5d79 	.word	0x3b3f5d79
 
