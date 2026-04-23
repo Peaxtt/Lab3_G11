@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "ultrasonic.h"
 #include "Kalman.h"
+#include "Kalman1D.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -48,14 +49,49 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN PV */
+//void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float processDisplacementNoise, float measurementNoise,float velocityState,float processVelocitytNoise);
+float dt=0.05;
 volatile uint8_t run_sensor_task = 0;
-KalmanFilter_t mySensorFilter_001;
-KalmanFilter_t mySensorFilter_00001;
-KalmanFilter_t mySensorFilter_0000001;
+Kalman1D_t StaticKalman_01_167;
+Kalman1D_t StaticKalman_01_00167;
+Kalman1D_t StaticKalman_01_0000167;
+Kalman1D_t StaticKalman_00001_167;
+Kalman1D_t StaticKalman_00001_00167;
+Kalman1D_t StaticKalman_00001_0000167;
+Kalman1D_t StaticKalman_00000001_167;
+Kalman1D_t StaticKalman_00000001_00167;
+Kalman1D_t StaticKalman_00000001_0000167;
+
+KalmanFilter_t ChangeDistanceKalman_01_167;
+KalmanFilter_t ChangeDistanceKalman_01_00167;
+KalmanFilter_t ChangeDistanceKalman_01_0000167;
+KalmanFilter_t ChangeDistanceKalman_00001_167;
+KalmanFilter_t ChangeDistanceKalman_00001_00167;
+KalmanFilter_t ChangeDistanceKalman_00001_0000167;
+KalmanFilter_t ChangeDistanceKalman_00000001_167;
+KalmanFilter_t ChangeDistanceKalman_00000001_00167;
+KalmanFilter_t ChangeDistanceKalman_00000001_0000167;
+
 float rawDistance = 0.0f;
-float cleanDistance_001 = 0.0f;
-float cleanDistance_00001 = 0.0f;
-float cleanDistance_0000001 = 0.0f;
+float StaticKalmancleanDistance_01_167 = 0.0f;
+float StaticKalmancleanDistance_01_00167 = 0.0f;
+float StaticKalmancleanDistance_01_0000167 = 0.0f;
+float StaticKalmancleanDistance_00001_167 = 0.0f;
+float StaticKalmancleanDistance_00001_00167 = 0.0f;
+float StaticKalmancleanDistance_00001_0000167 = 0.0f;
+float StaticKalmancleanDistance_00000001_167 = 0.0f;
+float StaticKalmancleanDistance_00000001_00167 = 0.0f;
+float StaticKalmancleanDistance_00000001_0000167 = 0.0f;
+
+float ChangeDistanceKalmancleanDistance_01_167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_01_00167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_01_0000167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_00001_167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_00001_00167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_00001_0000167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_00000001_167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_00000001_00167 = 0.0f;
+float ChangeDistanceKalmancleanDistance_00000001_0000167 = 0.0f;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,7 +104,18 @@ static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 void DummyTask();
-void TransmitDistancePacket(float Raw_distance,float filtered_distance1,float filtered_distance2,float filtered_distance3);
+void TransmitDistancePacket(float rawDistance,float StaticKalmancleanDistance_01_167,float StaticKalmancleanDistance_01_00167,float StaticKalmancleanDistance_01_0000167,float StaticKalmancleanDistance_00001_167,
+		float StaticKalmancleanDistance_00001_00167,float StaticKalmancleanDistance_00001_0000167,float StaticKalmancleanDistance_00000001_167,float StaticKalmancleanDistance_00000001_00167,
+		float StaticKalmancleanDistance_00000001_0000167,
+		float ChangeDistanceKalmancleanDistance_01_167,
+		float ChangeDistanceKalmancleanDistance_01_00167,
+		float ChangeDistanceKalmancleanDistance_01_0000167 ,
+		float ChangeDistanceKalmancleanDistance_00001_167  ,
+		float ChangeDistanceKalmancleanDistance_00001_00167  ,
+		float ChangeDistanceKalmancleanDistance_00001_0000167  ,
+		float ChangeDistanceKalmancleanDistance_00000001_167 ,
+		float ChangeDistanceKalmancleanDistance_00000001_00167  ,
+		float ChangeDistanceKalmancleanDistance_00000001_0000167 );
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -111,9 +158,34 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   /*initialize Discrete Kalman matrix*/
-  Kalman_Init(&mySensorFilter_001, 0.0f, 0.0f,0.001f);
-  Kalman_Init(&mySensorFilter_00001, 0.0f, 0.0f,0.00001f);
-  Kalman_Init(&mySensorFilter_0000001, 0.0f, 0.0f,0.0000001f);
+  //void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float processDisplacementNoise, float measurementNoise,float velocityState,float processVelocitytNoise);
+//  void Kalman1D_Init(Kalman1D_t *kf, float initial_position, float process_noise, float sensor_noise) {
+  Kalman1D_Init(&StaticKalman_01_167, 0.0f,0.01f,4.33f);
+  Kalman1D_Init(&StaticKalman_01_00167, 0.0f, 0.01f,0.0433f);
+  Kalman1D_Init(&StaticKalman_01_0000167, 0.0f, 0.01f,0.000433f);
+
+  Kalman1D_Init(&StaticKalman_00001_167, 0.0f, 0.00001f,4.33f);
+  Kalman1D_Init(&StaticKalman_00001_00167, 0.0f, 0.00001f,0.0433f);
+  Kalman1D_Init(&StaticKalman_00001_0000167, 0.0f, 0.00001f,0.000433f);
+
+  Kalman1D_Init(&StaticKalman_00000001_167, 0.0f, 0.00000001f,4.33f);
+  Kalman1D_Init(&StaticKalman_00000001_00167, 0.0f, 0.00000001f,0.0433f);
+  Kalman1D_Init(&StaticKalman_00000001_0000167, 0.0f, 0.00000001f,0.000433f);
+
+  Kalman_Init(&ChangeDistanceKalman_01_167, 0.0f, dt,0.0f,4.33f,1.0f,0.01f);
+   Kalman_Init(&ChangeDistanceKalman_01_00167, 0.0f, dt,0.0f,0.0433f,1.0f,0.01f);
+   Kalman_Init(&ChangeDistanceKalman_01_0000167, 0.0f, dt,0.0f,0.000433f,1.0f,0.01f);
+
+   Kalman_Init(&ChangeDistanceKalman_00001_167, 0.0f, dt,0.0f,4.33f,1.0f,0.00001f);
+   Kalman_Init(&ChangeDistanceKalman_00001_00167, 0.0f, dt,0.0f,0.0433f,1.0f,0.00001f);
+   Kalman_Init(&ChangeDistanceKalman_00001_0000167, 0.0f, dt,0.0f,0.000433f,1.0f,0.00001f);
+
+   Kalman_Init(&ChangeDistanceKalman_00000001_167, 0.0f, dt,0.0f,4.33f,1.0f,0.00000001f);
+   Kalman_Init(&ChangeDistanceKalman_00000001_00167, 0.0f, dt,0.0f,0.0433f,1.0f,0.00000001f);
+   Kalman_Init(&ChangeDistanceKalman_00000001_0000167, 0.0f, dt,0.0f,0.000433f,1.0f,0.00000001f);
+
+
+
 
 
   //  HAL_UART_Transmit(&hlpuart1, text, 11, 10);
@@ -147,15 +219,53 @@ int main(void)
 	          rawDistance = ultrasonicRawRead();
 
 	          // 3. Filter the data! (measurement = raw, u = 0, dt = 0.05)
-	          cleanDistance_001 = Kalman_Update(&mySensorFilter_001, rawDistance, 0.0f, 0.0f);
-	          cleanDistance_00001 = Kalman_Update(&mySensorFilter_00001, rawDistance, 0.0f, 0.0f);
-	          cleanDistance_0000001 = Kalman_Update(&mySensorFilter_0000001, rawDistance, 0.0f, 0.0f);
+//	          float Kalman1D_Update(Kalman1D_t *kf, float measurement) {
+	          StaticKalmancleanDistance_01_167 = Kalman1D_Update(&StaticKalman_01_167, rawDistance);
+	          StaticKalmancleanDistance_01_00167 = Kalman1D_Update(&StaticKalman_01_00167, rawDistance);
+	          StaticKalmancleanDistance_01_0000167 = Kalman1D_Update(&StaticKalman_01_0000167, rawDistance);
+
+	          StaticKalmancleanDistance_00001_167 = Kalman1D_Update(&StaticKalman_00001_167, rawDistance);
+	          StaticKalmancleanDistance_00001_00167 = Kalman1D_Update(&StaticKalman_00001_00167, rawDistance);
+	          StaticKalmancleanDistance_00001_0000167 = Kalman1D_Update(&StaticKalman_00001_0000167, rawDistance);
+
+	          StaticKalmancleanDistance_00000001_167 = Kalman1D_Update(&StaticKalman_00000001_167, rawDistance);
+	          StaticKalmancleanDistance_00000001_00167 = Kalman1D_Update(&StaticKalman_00000001_00167, rawDistance);
+	          StaticKalmancleanDistance_00000001_0000167 = Kalman1D_Update(&StaticKalman_00000001_0000167, rawDistance);
+
+
+	          ChangeDistanceKalmancleanDistance_01_167 = Kalman_Update(&ChangeDistanceKalman_01_167, rawDistance, 0.0f, 0.0f);
+	          ChangeDistanceKalmancleanDistance_01_00167 = Kalman_Update(&ChangeDistanceKalman_01_00167, rawDistance, 0.0f, 0.0f);
+	          ChangeDistanceKalmancleanDistance_01_0000167 = Kalman_Update(&ChangeDistanceKalman_01_0000167, rawDistance, 0.0f, 0.0f);
+
+	          ChangeDistanceKalmancleanDistance_00001_167 = Kalman_Update(&ChangeDistanceKalman_00001_167, rawDistance, 0.0f, 0.0f);
+	          ChangeDistanceKalmancleanDistance_00001_00167 = Kalman_Update(&ChangeDistanceKalman_00001_00167, rawDistance, 0.0f, 0.0f);
+	          ChangeDistanceKalmancleanDistance_00001_0000167 = Kalman_Update(&ChangeDistanceKalman_00001_0000167, rawDistance, 0.0f, 0.0f);
+
+	          ChangeDistanceKalmancleanDistance_00000001_167 = Kalman_Update(&ChangeDistanceKalman_00000001_167, rawDistance, 0.0f, 0.0f);
+	          ChangeDistanceKalmancleanDistance_00000001_00167 = Kalman_Update(&ChangeDistanceKalman_00000001_00167, rawDistance, 0.0f, 0.0f);
+	          ChangeDistanceKalmancleanDistance_00000001_0000167 = Kalman_Update(&ChangeDistanceKalman_00000001_0000167, rawDistance, 0.0f, 0.0f);
+
+
 
 	          // OPTIONAL: You can also look at the velocity!
 	          // float currentVelocity = mySensorFilter.x_data[1];
 
 	          // 4. Transmit the clean distance to Simulink using the custom UART function
-	          TransmitDistancePacket(rawDistance,cleanDistance_001,cleanDistance_00001,cleanDistance_0000001);
+	          TransmitDistancePacket(rawDistance,StaticKalmancleanDistance_01_167,StaticKalmancleanDistance_01_00167,StaticKalmancleanDistance_01_0000167,StaticKalmancleanDistance_00001_167,
+					StaticKalmancleanDistance_00001_00167,
+					StaticKalmancleanDistance_00001_0000167,
+					StaticKalmancleanDistance_00000001_167,
+					StaticKalmancleanDistance_00000001_00167,
+					StaticKalmancleanDistance_00000001_0000167,
+					ChangeDistanceKalmancleanDistance_01_167,
+					ChangeDistanceKalmancleanDistance_01_00167,
+					ChangeDistanceKalmancleanDistance_01_0000167,
+					ChangeDistanceKalmancleanDistance_00001_167,
+					ChangeDistanceKalmancleanDistance_00001_00167,
+					ChangeDistanceKalmancleanDistance_00001_0000167,
+					ChangeDistanceKalmancleanDistance_00000001_167,
+					ChangeDistanceKalmancleanDistance_00000001_00167,
+					ChangeDistanceKalmancleanDistance_00000001_0000167);
 	      }
   }
   /* USER CODE END 3 */
@@ -480,7 +590,13 @@ void DummyTask(){
 	}
 }
 
-void TransmitDistancePacket(float Raw_distance,float filtered_distance1,float filtered_distance2,float filtered_distance3)
+void TransmitDistancePacket(float Raw_distance,float filtered_distance1,float filtered_distance2,
+		float filtered_distance3,float filtered_distance4,float filtered_distance5,float filtered_distance6,
+		float filtered_distance7,float filtered_distance8,float filtered_distance9,
+		float filtered_distance10,float filtered_distance11,float filtered_distance12,
+		float filtered_distance13,float filtered_distance14,float filtered_distance15,
+		float filtered_distance16,float filtered_distance17,float filtered_distance18)
+
 {
     // Define the union to safely slice the float
     typedef union {
@@ -492,13 +608,45 @@ void TransmitDistancePacket(float Raw_distance,float filtered_distance1,float fi
     FloatUnion filterData1ToSend;
     FloatUnion filterData2ToSend;
     FloatUnion filterData3ToSend;
+    FloatUnion filterData4ToSend;
+    FloatUnion filterData5ToSend;
+	FloatUnion filterData6ToSend;
+	FloatUnion filterData7ToSend;
+	FloatUnion filterData8ToSend;
+	FloatUnion filterData9ToSend;
+	FloatUnion filterData10ToSend;
+	FloatUnion filterData11ToSend;
+	FloatUnion filterData12ToSend;
+	FloatUnion filterData13ToSend;
+	FloatUnion filterData14ToSend;
+	FloatUnion filterData15ToSend;
+	FloatUnion filterData16ToSend;
+	FloatUnion filterData17ToSend;
+	FloatUnion filterData18ToSend;
+
     dataToSend.value = Raw_distance;
-    filterData1ToSend.value=filtered_distance1;
-    filterData2ToSend.value=filtered_distance2;
-    filterData3ToSend.value=filtered_distance3;
+	filterData1ToSend.value = filtered_distance1;
+	filterData2ToSend.value = filtered_distance2;
+	filterData3ToSend.value = filtered_distance3;
+	filterData4ToSend.value = filtered_distance4;
+	filterData5ToSend.value = filtered_distance5;
+	filterData6ToSend.value = filtered_distance6;
+	filterData7ToSend.value = filtered_distance7;
+	filterData8ToSend.value = filtered_distance8;
+	filterData9ToSend.value = filtered_distance9;
+	filterData10ToSend.value = filtered_distance10;
+	filterData11ToSend.value = filtered_distance11;
+	filterData12ToSend.value = filtered_distance12;
+	filterData13ToSend.value = filtered_distance13;
+	filterData14ToSend.value = filtered_distance14;
+	filterData15ToSend.value = filtered_distance15;
+	filterData16ToSend.value = filtered_distance16;
+	filterData17ToSend.value = filtered_distance17;
+	filterData18ToSend.value = filtered_distance18;
+
 
     // Create the 8-byte buffer
-    uint8_t packet[20];
+    uint8_t packet[80];
 
     // Assemble the packet with Headers and Terminators
 	packet[0] = 0x7E;
@@ -519,11 +667,73 @@ void TransmitDistancePacket(float Raw_distance,float filtered_distance1,float fi
 	packet[15] = filterData3ToSend.bytes[1];
 	packet[16] = filterData3ToSend.bytes[2];
 	packet[17] = filterData3ToSend.bytes[3];
-	packet[18] = 0x03;
-	packet[19] = 0x03;
+	packet[18] = filterData4ToSend.bytes[0];
+	packet[19] = filterData4ToSend.bytes[1];
+	packet[20] = filterData4ToSend.bytes[2];
+	packet[21] = filterData4ToSend.bytes[3];
+	packet[22] = filterData5ToSend.bytes[0];
+	packet[23] = filterData5ToSend.bytes[1];
+	packet[24] = filterData5ToSend.bytes[2];
+	packet[25] = filterData5ToSend.bytes[3];
+	packet[26] = filterData6ToSend.bytes[0];
+	packet[27] = filterData6ToSend.bytes[1];
+	packet[28] = filterData6ToSend.bytes[2];
+	packet[29] = filterData6ToSend.bytes[3];
+	packet[30] = filterData7ToSend.bytes[0];
+	packet[31] = filterData7ToSend.bytes[1];
+	packet[32] = filterData7ToSend.bytes[2];
+	packet[33] = filterData7ToSend.bytes[3];
+	packet[34] = filterData8ToSend.bytes[0];
+	packet[35] = filterData8ToSend.bytes[1];
+	packet[36] = filterData8ToSend.bytes[2];
+	packet[37] = filterData8ToSend.bytes[3];
+	packet[38] = filterData9ToSend.bytes[0];
+	packet[39] = filterData9ToSend.bytes[1];
+	packet[40] = filterData9ToSend.bytes[2];
+	packet[41] = filterData9ToSend.bytes[3];
+
+	packet[42] = filterData10ToSend.bytes[0];
+	packet[43] = filterData10ToSend.bytes[1];
+	packet[44] = filterData10ToSend.bytes[2];
+	packet[45] = filterData10ToSend.bytes[3];
+	packet[46] = filterData11ToSend.bytes[0];
+	packet[47] = filterData11ToSend.bytes[1];
+	packet[48] = filterData11ToSend.bytes[2];
+	packet[49] = filterData11ToSend.bytes[3];
+	packet[50] = filterData12ToSend.bytes[0];
+	packet[51] = filterData12ToSend.bytes[1];
+	packet[52] = filterData12ToSend.bytes[2];
+	packet[53] = filterData12ToSend.bytes[3];
+	packet[54] = filterData13ToSend.bytes[0];
+	packet[55] = filterData13ToSend.bytes[1];
+	packet[56] = filterData13ToSend.bytes[2];
+	packet[57] = filterData13ToSend.bytes[3];
+	packet[58] = filterData14ToSend.bytes[0];
+	packet[59] = filterData14ToSend.bytes[1];
+	packet[60] = filterData14ToSend.bytes[2];
+	packet[61] = filterData14ToSend.bytes[3];
+	packet[62] = filterData15ToSend.bytes[0];
+	packet[63] = filterData15ToSend.bytes[1];
+	packet[64] = filterData15ToSend.bytes[2];
+	packet[65] = filterData15ToSend.bytes[3];
+	packet[66] = filterData16ToSend.bytes[0];
+	packet[67] = filterData16ToSend.bytes[1];
+	packet[68] = filterData16ToSend.bytes[2];
+	packet[69] = filterData16ToSend.bytes[3];
+	packet[70] = filterData17ToSend.bytes[0];
+	packet[71] = filterData17ToSend.bytes[1];
+	packet[72] = filterData17ToSend.bytes[2];
+	packet[73] = filterData17ToSend.bytes[3];
+	packet[74] = filterData18ToSend.bytes[0];
+	packet[75] = filterData18ToSend.bytes[1];
+	packet[76] = filterData18ToSend.bytes[2];
+	packet[77] = filterData18ToSend.bytes[3];
+
+	packet[78] = 0x03;
+	packet[79] = 0x03;
 
     // Transmit via LPUART1
-    HAL_UART_Transmit(&hlpuart1, packet, 20, 10);
+    HAL_UART_Transmit(&hlpuart1, packet, 80, 10);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)

@@ -7,7 +7,7 @@
 
 #include "Kalman.h"
 
-void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float processNoise) {
+void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float processDisplacementVariance, float measurementNoise,float velocityState,float processVelocityVariance) {
     // 1. Initialize structures to memory arrays
     arm_mat_init_f32(&kf->x, KALMAN_STATE_DIM, 1, kf->x_data);
     arm_mat_init_f32(&kf->P, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->P_data);
@@ -20,12 +20,16 @@ void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float pro
     arm_mat_init_f32(&kf->S, KALMAN_MEAS_DIM,  KALMAN_MEAS_DIM, kf->S_data);
     arm_mat_init_f32(&kf->S_inv, KALMAN_MEAS_DIM, KALMAN_MEAS_DIM, kf->S_inv_data);
     arm_mat_init_f32(&kf->I, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->I_data);
+    arm_mat_init_f32(&kf->QA, KALMAN_STATE_DIM, KALMAN_STATE_DIM, kf->QA_data);
 
     // 2. Set Constant Velocity (CV) Initial Values
-    kf->x_data[0] = initial_position; // Position
+    kf->x_data[0] = 0.0f; // Position
     kf->x_data[1] = 0.0f;             // Velocity
 
-    kf->F_data[0] = 1.0f; kf->F_data[1] =0.0f;
+//    kf->F_data[0] = 1.0f; kf->F_data[1] = dt;
+//    kf->F_data[2] = (-28.1f/0.336f)*dt; kf->F_data[3] = velocityState-((0.16f/0.336f)*dt);
+
+    kf->F_data[0] = 1.0f; kf->F_data[1] = dt;
     kf->F_data[2] = 0.0f; kf->F_data[3] = 1.0f;
 
     kf->H_data[0] = 1.0f; kf->H_data[1] = 0.0f; // Only measure position
@@ -33,12 +37,31 @@ void Kalman_Init(KalmanFilter_t *kf, float initial_position, float dt, float pro
     kf->P_data[0] = 100.0f; kf->P_data[1] = 0.0f;
     kf->P_data[2] = 0.0f;   kf->P_data[3] = 0.0f;
 
-    kf->Q_data[0] = processNoise; kf->Q_data[1] = 0.0f;
-    kf->Q_data[2] = 0.0f; kf->Q_data[3] = 0.0f;
+    kf->QA_data[0] = 0.0f; kf->QA_data[1] = 0.0f;
+    kf->QA_data[2] = 0.0f; kf->QA_data[3] = processVelocityVariance;
+//        kf->QA_data[0] = 0.00001f;; kf->QA_data[1] = 0.0f;
+//        kf->QA_data[2] = 0.0f; kf->QA_data[3] = 0.0f;
+
+
+    float t1_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+	float t2_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+	arm_matrix_instance_f32 Temp1, Temp2,F_trans;
+	arm_mat_init_f32(&Temp1, KALMAN_STATE_DIM, KALMAN_STATE_DIM, t1_d);
+	arm_mat_init_f32(&Temp2, KALMAN_STATE_DIM, KALMAN_STATE_DIM, t2_d);
+
+
+    float ft_d[KALMAN_STATE_DIM * KALMAN_STATE_DIM];
+//    Q=F*Qa*FT
+	arm_mat_init_f32(&F_trans, KALMAN_STATE_DIM, KALMAN_STATE_DIM, ft_d);
+	arm_mat_trans_f32(&kf->F, &F_trans);
+	arm_mat_mult_f32(&kf->F, &kf->QA, &Temp1);
+	arm_mat_mult_f32(&Temp1, &F_trans, &kf->Q);
+
 
     kf->G_data[0] = 0.0f; kf->G_data[1] = 0.0f;
 
-    kf->R_data[0] = 0.00292f; // Sensor noise variance
+//    kf->R_data[0] = 0.00292f; // Sensor noise variance
+    kf->R_data[0] = measurementNoise;
 
     kf->I_data[0] = 1.0f; kf->I_data[1] = 0.0f;
     kf->I_data[2] = 0.0f; kf->I_data[3] = 1.0f;
