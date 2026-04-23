@@ -1,0 +1,133 @@
+% 1. Load the MAT file
+fileName = 'StaticKalman.mat';
+fprintf('Loading data from %s...\n', fileName);
+data = load(fileName);
+
+% 2. Extract the raw/reference data
+% Based on your image, the reference variable is 'Pitch'
+raw_var_name = 'data'; 
+
+all_names = {};
+all_rmse = [];
+all_r2 = [];
+    
+if isfield(data, raw_var_name)
+    % Extract the numerical data array from the timeseries object
+    raw_signal = data.(raw_var_name){11}.Values.Data; 
+else
+    error('Variable "%s" not found in the MAT file.', raw_var_name);
+end
+
+% 3. Extract all variable names from the loaded file
+varNames = fieldnames(data);
+% Pre-calculate the Total Sum of Squares (SST) for R-squared
+mean_raw = mean(raw_signal(:));
+SST = sum((raw_signal(:) - mean_raw).^2);
+% 4. Initialize tracking variables
+best_pair = '';
+min_error = inf;
+all_pairs = {};
+all_errors = [];
+
+fprintf('\nCalculating RMSE for all (Q, R) pairs compared to "Pitch"...\n');
+fprintf('----------------------------------------------------------\n');
+
+figure('Name', 'All Kalman Filter Results vs Raw_Read', 'Color', 'w');
+hold on; % Keep the plot window open to add multiple lines
+grid on;
+
+% 5. Loop through all variables
+for i = 12:20
+    varName = data.data{i};
+    
+% Extract Time and Data from the timeseries object
+        t = varName.Values.Time;
+        y = varName.Values.Data;
+        
+        % Plot with a standard line. 
+        % Note: strrep is used to replace '_' with '\_' so MATLAB 
+        % doesn't format the variable name as a subscript in the legend.
+        if(i==13||i==16||i==19)
+        plot(t, y, 'LineWidth', 0.01,'DisplayName', data.data{i}.Name);
+        end
+        % Extract the numerical data from the filtered timeseries object
+        filtered_signal = varName.Values.Data;
+        
+   
+            
+            % Calculate Root Mean Squared Error (RMSE)
+            % Formula: sqrt( mean( (Actual - Filtered)^2 ) )
+            current_error = sqrt(mean((raw_signal(:) - filtered_signal(:)).^2));
+            SSR = sum((raw_signal(:) - filtered_signal(:)).^2);
+    current_r2 = 1 - (SSR / SST);
+           
+            
+            
+            fprintf('Metrics for %s -> RMSE: %f | R^2: %f\n', data.data{i}.Name, current_error, current_r2);
+            
+            % Track the best pair (lowest error)
+            if current_error < min_error
+                min_error = current_error;
+                best_pair = varName;
+            end
+
+            % Store for the bar charts and table
+    all_names{end+1} = data.data{i}.Name;
+    all_rmse(end+1) = current_error;
+    all_r2(end+1)  = current_r2;
+        
+end
+
+t_raw = data.data{11}.Values.Time;
+    y_raw = data.data{11}.Values.Data;
+    
+    % Plot in black ('k') with a thicker line to stand out
+    plot(t_raw, y_raw, 'k', 'LineWidth', 2.5, 'DisplayName', 'Distance (Raw Data)');
+hold off;
+
+% 5. Format the plot with titles, labels, and the legend
+title('Kalman Filter Tuning: All Estimations vs. Raw read');
+xlabel('Time ( s )');
+ylabel('Distance ( cm )');
+
+Filter_Pair = string(all_names'); % Convert to string array for cleaner table display
+RMSE = all_rmse';
+R_Squared = all_r2';
+
+% Create the table
+results_table = table(Filter_Pair, RMSE, R_Squared);
+
+%% Pre-process for estiamte
+b=1e-4
+k=28.10
+M=0.336
+%start_idx = 2000000+(11.8*1000);
+%end_idx = 3000000+(11.8*1000);
+
+start_idx = 5490;
+end_idx = 59.8*1000;
+fileName = '6nut_KalmanforEstimate.mat';
+fprintf('Loading data from %s...\n', fileName);
+Test_Estimate_data = load(fileName);
+
+Preprocess=Test_Estimate_data.data{10}.Values.Data-Test_Estimate_data.data{10}.Values.Data(end);
+PreprocessTime=Test_Estimate_data.data{10}.Values.Time;
+Preprocess_rawdata=Test_Estimate_data.data{11}.Values.Data-Test_Estimate_data.data{11}.Values.Data(end);
+% Extract full Time and Data
+    t_full = PreprocessTime;
+    y_full = Preprocess;
+    
+    % Slice the Time and Data to only get the selected range
+    t = t_full(start_idx:end_idx);
+    t = t-t(1);
+    filtered_signal = y_full(start_idx:end_idx);
+    filtered_signal=double(filtered_signal);
+filtered_signal=filtered_signal/100.00;
+    
+%plot(SDOSimTest_Log.simout.Time,SDOSimTest_Log.simout.Data);
+%plot(PreprocessTime,Preprocess_rawdata);
+    hold on;
+   % plot(PreprocessTime,Preprocess);
+    plot(t, filtered_signal);
+    %plot(t,filtered_signal);
+    hold off;
