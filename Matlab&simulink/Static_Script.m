@@ -1,5 +1,5 @@
 % 1. Load the MAT file
-fileName = 'StaticKalman.mat';
+fileName = '5nut_KalmanforEstimate.mat';
 fprintf('Loading data from %s...\n', fileName);
 data = load(fileName);
 
@@ -32,24 +32,29 @@ all_errors = [];
 fprintf('\nCalculating RMSE for all (Q, R) pairs compared to "Pitch"...\n');
 fprintf('----------------------------------------------------------\n');
 
-figure('Name', 'All Kalman Filter Results vs Raw_Read', 'Color', 'w');
+figure('Name', 'All Kalman Filter Results vs Raw_Read', 'Color', 'black');
 hold on; % Keep the plot window open to add multiple lines
 grid on;
 
+varName = data.data{11};
+
+ t = varName.Values.Time;
+ y = varName.Values.Data;
+ plot(t, y, 'LineWidth', 0.01,'DisplayName', varName.Name,'LineWidth', 2.5,'Color', 'green');
+
 % 5. Loop through all variables
-for i = 12:20
+for i = 2:11
     varName = data.data{i};
     
 % Extract Time and Data from the timeseries object
         t = varName.Values.Time;
         y = varName.Values.Data;
+        % Extract the numerical data from the filtered timeseries object
         
-        % Plot with a standard line. 
-        % Note: strrep is used to replace '_' with '\_' so MATLAB 
-        % doesn't format the variable name as a subscript in the legend.
-        if(i==13||i==16||i==19)
+        
+       
         plot(t, y, 'LineWidth', 0.01,'DisplayName', data.data{i}.Name);
-        end
+       
         % Extract the numerical data from the filtered timeseries object
         filtered_signal = varName.Values.Data;
         
@@ -82,7 +87,7 @@ t_raw = data.data{11}.Values.Time;
     y_raw = data.data{11}.Values.Data;
     
     % Plot in black ('k') with a thicker line to stand out
-    plot(t_raw, y_raw, 'k', 'LineWidth', 2.5, 'DisplayName', 'Distance (Raw Data)');
+    %plot(t_raw, y_raw, 'k', 'LineWidth', 2.5, 'DisplayName', 'Distance (Raw Data)');
 hold off;
 
 % 5. Format the plot with titles, labels, and the legend
@@ -97,26 +102,51 @@ R_Squared = all_r2';
 % Create the table
 results_table = table(Filter_Pair, RMSE, R_Squared);
 
+
+% ==========================================================
+% 6. VISUALIZE RMSE AS A BAR CHART
+% ==========================================================
+figure('Name', 'RMSE Comparison', 'Color', 'w');
+bar(all_rmse, 'FaceColor', [0.2 0.6 0.8]);
+set(gca, 'XTickLabel', strrep(all_names, '_', '\_'), 'XTick', 1:length(all_names));
+xtickangle(45); 
+ylabel('Root Mean Square Error (RMSE)');
+xlabel('Kalman Filter Tuning Pairs');
+title('RMSE Comparison: Lower is Better');
+grid on;
+
+hold on;
+% --- NEW MEDIAN LOGIC ---
+% 1. Calculate the exact median of all RMSE values
+target_median = median(all_rmse);
+
+% 2. Find the tuning pair that is exactly equal to (or closest to) this median
+% We do this by finding the minimum absolute difference from the median
+[~, best_idx] = min(abs(all_rmse - target_median));
+bar(best_idx, all_rmse(best_idx), 'FaceColor', [0.8 0.2 0.2]);
+legend('All Pairs', 'Best Pair (Lowest RMSE)', 'Location', 'best');
+hold off;
+
 %% Pre-process for estiamte
-b=1e-4
+b=3e-02
 k=28.10
-M=0.336
+M=0.2608
 %start_idx = 2000000+(11.8*1000);
 %end_idx = 3000000+(11.8*1000);
 
-start_idx = 5490;
-end_idx = 59.8*1000;
-fileName = '6nut_KalmanforEstimate.mat';
+start_idx = (5.152)*1000;
+end_idx =29.817*1000;
+fileName = '1nut_KalmanforEstimate.mat';
 fprintf('Loading data from %s...\n', fileName);
 Test_Estimate_data = load(fileName);
 
-Preprocess=Test_Estimate_data.data{10}.Values.Data-Test_Estimate_data.data{10}.Values.Data(end);
+Preprocess=Test_Estimate_data.data{10}.Values.Data-Test_Estimate_data.data{10}.Values.Data(end)-0.4;
 PreprocessTime=Test_Estimate_data.data{10}.Values.Time;
 Preprocess_rawdata=Test_Estimate_data.data{11}.Values.Data-Test_Estimate_data.data{11}.Values.Data(end);
 % Extract full Time and Data
     t_full = PreprocessTime;
     y_full = Preprocess;
-    
+   
     % Slice the Time and Data to only get the selected range
     t = t_full(start_idx:end_idx);
     t = t-t(1);
@@ -126,8 +156,220 @@ filtered_signal=filtered_signal/100.00;
     
 %plot(SDOSimTest_Log.simout.Time,SDOSimTest_Log.simout.Data);
 %plot(PreprocessTime,Preprocess_rawdata);
+%plot(Test_Estimate_data.data{11}.Values.Time,Test_Estimate_data.data{11}.Values.Data);
     hold on;
    % plot(PreprocessTime,Preprocess);
     plot(t, filtered_signal);
     %plot(t,filtered_signal);
     hold off;
+%% % =========================================================================
+% =========================================================================
+% 1. DATA PREPARATION
+% =========================================================================
+
+mass_array = [0.148,0.1856,0.2232,0.260,0.2984,0.336,0.336+0.0376]; 
+
+% Define the estimated damping (b) AND stiffness (k) parameters
+b_array = [0.046648, 0.031891, 0.027714, 0.050868, 0.035322, 0.047588]; 
+k_array = [28.929, 29.163, 29.12, 29.046, 29.041, 29.255]; 
+
+% Initialize cell arrays to store the data
+raw_data_cell = cell(1, 6);
+time_cell = cell(1, 6);
+x0_array = zeros(1, 6);
+stop_times = zeros(1, 6);
+
+fprintf('Loading Data and Setting Initial Conditions...\n');
+
+for i = 1:6
+    file_name = sprintf('filtersignal_%dnut.mat', i);
+   load(file_name); 
+    current_data = filtered_signal;
+    
+    file_name = sprintf('t_%dnut.mat', i);
+    load(file_name);
+    current_time = t;
+    
+    % --- EXTRACT INITIAL CONDITION (x0) ---
+    x0_array(i) = current_data(1); 
+    
+    % Store the processed data
+    raw_data_cell{i} = current_data;
+    time_cell{i} = current_time;
+    
+    % Calculate Stop Time
+    stop_times(i) = current_time(end); 
+end
+
+% =========================================================================
+% 2. BATCH SIMULATION SETUP
+% =========================================================================
+model_name = 'MassSpringDamper_model';
+load_system(model_name); 
+
+num_sims = 36;
+simIn(num_sims) = Simulink.SimulationInput(model_name);
+
+fprintf('Configuring %d Simulations for Batch Processing...\n', num_sims);
+
+idx = 1;
+for i = 1:6 % Mass / Raw Data loop
+    for j = 1:6 % Estimated Parameter Set (b, k) loop
+        
+        simIn(idx) = Simulink.SimulationInput(model_name);
+        
+        % Inject mass, x0, and BOTH estimated parameters (b and k)
+        simIn(idx) = simIn(idx).setVariable('M', mass_array(i));
+        simIn(idx) = simIn(idx).setVariable('current_x0', x0_array(i));
+        simIn(idx) = simIn(idx).setVariable('b', b_array(j));
+        simIn(idx) = simIn(idx).setVariable('k', k_array(j)); % NEW: Inject k
+        
+        % Set custom stop time
+        simIn(idx) = simIn(idx).setModelParameter('StopTime', num2str(stop_times(i)));
+        
+        idx = idx + 1;
+    end
+end
+
+% =========================================================================
+% 3. RUN ALL SIMULATIONS IN PARALLEL
+% =========================================================================
+fprintf('Running Simulations...\n');
+simOut = parsim(simIn, 'ShowProgress', 'on', 'UseFastRestart', 'on');
+
+% =========================================================================
+% 4. EXTRACT RESULTS & CALCULATE ERRORS
+% =========================================================================
+rmse_matrix = zeros(6, 6);
+r2_matrix = zeros(6, 6);
+
+idx = 1;
+for i = 1:6
+    current_raw_data = raw_data_cell{i};
+    SST = sum((current_raw_data(:) - mean(current_raw_data(:))).^2); 
+    
+    for j = 1:6
+        simulated_distance = simOut(idx).simout.Data;
+
+        min_length = min(length(current_raw_data), length(simulated_distance));
+        raw_trimmed = current_raw_data(1:min_length);
+        sim_trimmed = simulated_distance(1:min_length);
+        
+        % Calculate Metrics
+        rmse_matrix(i, j) = sqrt(mean((raw_trimmed(:) - sim_trimmed(:)).^2));
+        SSR = sum((raw_trimmed(:) - sim_trimmed(:)).^2);
+        r2_matrix(i, j) = 1 - (SSR / SST);
+        
+        idx = idx + 1;
+    end
+end
+
+% =========================================================================
+% 5. VISUALIZATION
+% =========================================================================
+Row_Names = {'Mass_1g'; 'Mass_2g'; 'Mass_3g'; 'Mass_4g'; 'Mass_5g'; 'Mass_6g'};
+Var_Names = {'Est_Set_1', 'Est_Set_2', 'Est_Set_3', 'Est_Set_4', 'Est_Set_5', 'Est_Set_6'};
+
+% Display Tables
+disp('==================== RMSE CROSS-VALIDATION TABLE ====================');
+disp(array2table(rmse_matrix, 'RowNames', Row_Names, 'VariableNames', Var_Names));
+
+disp('==================== R-SQUARED CROSS-VALIDATION TABLE ====================');
+disp(array2table(r2_matrix, 'RowNames', Row_Names, 'VariableNames', Var_Names));
+
+% Heatmaps
+figure('Name', 'Cross-Validation Results', 'Color', 'w', 'Position', [100, 100, 1200, 500]);
+
+subplot(1, 2, 1);
+heatmap(Var_Names, Row_Names, rmse_matrix, 'Colormap', parula, ...
+    'Title', 'RMSE (Lower is Better)', 'XLabel', 'Parameter Set Used (b, k)', 'YLabel', 'Physical Mass Tested');
+
+subplot(1, 2, 2);
+heatmap(Var_Names, Row_Names, r2_matrix, 'Colormap', summer, ...
+    'Title', 'R-Squared (Closer to 1 is Better)', 'XLabel', 'Parameter Set Used (b, k)', 'YLabel', 'Physical Mass Tested');
+
+% =========================================================================
+% 6. CALCULATE AVERAGES TO FIND THE BEST OVERALL PARAMETER SET
+% =========================================================================
+
+% Calculate the average across the rows (dimension 1) for each column
+avg_rmse = mean(rmse_matrix, 1);
+avg_r2 = mean(r2_matrix, 1);
+
+% Find the index of the best values
+% For RMSE, we want the minimum value
+[min_avg_rmse, best_rmse_idx] = min(avg_rmse);
+
+% For R^2, we want the maximum value (the one closest to 1, or the least negative)
+[max_avg_r2, best_r2_idx] = max(avg_r2);
+
+% Get the names of the winning parameter sets
+best_set_rmse = Var_Names{best_rmse_idx};
+best_set_r2 = Var_Names{best_r2_idx};
+
+% Format the data for a summary table
+Parameter_Set = Var_Names'; % Transpose to a column
+Average_RMSE = avg_rmse';
+Average_R_Squared = avg_r2';
+
+avg_table = table(Parameter_Set, Average_RMSE, Average_R_Squared);
+
+% Display the results
+disp(' ');
+disp('================ AVERAGE METRICS PER PARAMETER SET ================');
+disp(avg_table);
+disp('-------------------------------------------------------------------');
+fprintf('>> BEST SET OVERALL (By Lowest Avg RMSE): %s (Value: %.4f)\n', best_set_rmse, min_avg_rmse);
+fprintf('>> BEST SET OVERALL (By Highest Avg R^2): %s (Value: %.4f)\n', best_set_r2, max_avg_r2);
+disp('===================================================================');
+
+% =========================================================================
+% 7. PLOT ALL 36 CROSS-VALIDATION SCENARIOS (6x6 GRID)
+% =========================================================================
+fprintf('Generating 6x6 Plot Grid...\n');
+
+figure('Name', 'All 36 Cross-Validation Plots', 'Color', 'w', 'Units', 'normalized', 'Position', [0.05, 0.05, 0.9, 0.9]);
+t = tiledlayout(6, 6, 'TileSpacing', 'compact', 'Padding', 'compact');
+title(t, 'Raw Data (Yellow) vs. Simulated Estimation (Blue) | Rows = Mass Tested, Cols = Parameter Set', 'FontWeight', 'bold', 'FontSize', 14);
+
+idx = 1;
+for i = 1:6 % Rows: Physical Mass / Raw Data
+    
+    current_raw_data = raw_data_cell{i};
+    current_time = time_cell{i};
+    
+    for j = 1:6 % Columns: Parameter Set (b, k)
+        
+        % --- UPDATED EXTRACTION LINES ---
+        sim_signal = simOut(idx).simout.Data;
+        sim_time = simOut(idx).simout.Time;
+        
+        nexttile;
+        hold on;
+        grid on;
+        
+        plot(current_time, current_raw_data, 'y', 'LineWidth', 1.5, 'DisplayName', 'Raw Sensor');
+        plot(sim_time, sim_signal, 'b--', 'LineWidth', 1.5, 'DisplayName', 'Simulation');
+        
+        title(sprintf('Mass: %dg | Param Set: %d', mass_array(i), j), 'FontSize', 9);
+        
+        if idx == 1
+            legend('Location', 'best', 'FontSize', 8);
+        end
+        
+        if i == 6
+            xlabel('Time (s)', 'FontSize', 8);
+        else
+            xticklabels({});
+        end
+        
+        if j == 1
+            ylabel('Dist', 'FontSize', 8);
+        else
+            yticklabels({});
+        end
+        
+        hold off;
+        idx = idx + 1;
+    end
+end
