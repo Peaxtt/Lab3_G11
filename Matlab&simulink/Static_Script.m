@@ -267,8 +267,8 @@ end
 % =========================================================================
 % 5. VISUALIZATION
 % =========================================================================
-Row_Names = {'Mass_1g'; 'Mass_2g'; 'Mass_3g'; 'Mass_4g'; 'Mass_5g'; 'Mass_6g'};
-Var_Names = {'Est_Set_1', 'Est_Set_2', 'Est_Set_3', 'Est_Set_4', 'Est_Set_5', 'Est_Set_6'};
+Row_Names = {'1 nut'; '2 nut'; '3 nut'; '4 nut'; '5 nut'; '6 nut'};
+Var_Names = {'Parameter set 1', 'Parameter set 2', 'Parameter set 3', 'Parameter set 4', 'Parameter set 5', 'Parameter set 6'};
 
 % Display Tables
 disp('==================== RMSE CROSS-VALIDATION TABLE ====================');
@@ -351,7 +351,7 @@ for i = 1:6 % Rows: Physical Mass / Raw Data
         plot(current_time, current_raw_data, 'y', 'LineWidth', 1.5, 'DisplayName', 'Raw Sensor');
         plot(sim_time, sim_signal, 'b--', 'LineWidth', 1.5, 'DisplayName', 'Simulation');
         
-        title(sprintf('Mass: %dg | Param Set: %d', mass_array(i), j), 'FontSize', 9);
+        title(sprintf('Mass: %dkg | Param Set: %d', mass_array(i), j), 'FontSize', 9);
         
         if idx == 1
             legend('Location', 'best', 'FontSize', 8);
@@ -364,7 +364,7 @@ for i = 1:6 % Rows: Physical Mass / Raw Data
         end
         
         if j == 1
-            ylabel('Dist', 'FontSize', 8);
+            ylabel('Distance ( m )', 'FontSize', 8);
         else
             yticklabels({});
         end
@@ -373,3 +373,56 @@ for i = 1:6 % Rows: Physical Mass / Raw Data
         idx = idx + 1;
     end
 end
+
+
+% =========================================================================
+% 8. PLOT BAR CHARTS FOR AVERAGE RMSE AND R-SQUARED
+% =========================================================================
+fprintf('Generating Bar Charts for Averages...\n');
+
+% ---------------------------------------------------------
+% FIGURE 1: Average RMSE Bar Chart (Lower is Better)
+% ---------------------------------------------------------
+figure('Name', 'Average RMSE Comparison', 'Color', 'w');
+% Plot all bars in a standard blue color
+bar(avg_rmse, 'FaceColor', [0.2 0.6 0.8]); 
+hold on;
+
+% Highlight the best (lowest) RMSE in Red
+bar(best_rmse_idx, avg_rmse(best_rmse_idx), 'FaceColor', [0.8 0.2 0.2]); 
+
+% Format the chart
+set(gca, 'XTickLabel', strrep(Var_Names, '_', '\_'), 'XTick', 1:length(Var_Names));
+xtickangle(45);
+ylabel('Average RMSE');
+xlabel('Parameter Set Used (b, k)');
+title('Average RMSE Across All Masses (Lower is Better)');
+grid on;
+
+% Add legend with the specific winning name
+legend('All Sets', sprintf('Best Set (%s)', strrep(best_set_rmse, '_', '\_')), 'Location', 'best');
+hold off;
+
+
+% ---------------------------------------------------------
+% FIGURE 2: Average R-Squared Bar Chart (Higher is Better)
+% ---------------------------------------------------------
+figure('Name', 'Average R-Squared Comparison', 'Color', 'w');
+% Plot all bars in a standard green color to differentiate from RMSE
+bar(avg_r2, 'FaceColor', [0.2 0.8 0.4]); 
+hold on;
+
+% Highlight the best (highest) R-Squared in Red
+bar(best_r2_idx, avg_r2(best_r2_idx), 'FaceColor', [0.8 0.2 0.2]); 
+
+% Format the chart
+set(gca, 'XTickLabel', strrep(Var_Names, '_', '\_'), 'XTick', 1:length(Var_Names));
+xtickangle(45);
+ylabel('Average R-Squared');
+xlabel('Parameter Set Used (b, k)');
+title('Average R-Squared Across All Masses (Higher is Better)');
+grid on;
+
+% Add legend with the specific winning name
+legend('All Sets', sprintf('Best Set (%s)', strrep(best_set_r2, '_', '\_')), 'Location', 'best');
+hold off;
